@@ -7,6 +7,7 @@ import { INIT_SESSION } from "./config";
 import { Trash2 } from "react-feather";
 import Button from "./components/Button";
 import MemoryDisplay from "./components/Memory";
+import EventLogModal from "./components/EventLogModal";
 
 
 
@@ -18,6 +19,7 @@ function App() {
   const audioElement = useRef<HTMLAudioElement | null>(null);
   const mediaStream = useRef<MediaStream | null>(null);
   const [memory, setMemory] = useState<Record<string, string>>(loadMemory());
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
   async function startSession() {
@@ -186,7 +188,8 @@ function App() {
           item: {
             type: "function_call",
             name: "get_memory",
-            arguments: {},
+            call_id: "initial_memory_load",
+            arguments: "",
           },
         });
 
@@ -196,14 +199,19 @@ function App() {
   }, [dataChannel]);
 
   function handleResetMemory() {
-    setMemory(resetMemory()); // Reset memory in state
+    setMemory(resetMemory());
   }
 
   return (
     <div className="flex flex-col h-full  relative">
       {/* Header */}
-      <div className="flex w-full p-3 border-b border-gray-700">
-        <h1 className="text-xl">Better Call GPT</h1>
+      <div className="flex items-center w-full p-3 border-b border-gray-700 justify-between">
+        <h1 className="text-xl">Better Call GPT</h1><button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white text-xs px-4 py-2 rounded-full hover:bg-blue-600 transition"
+        >
+          View Event Logs
+        </button>
       </div>
       {/* Body */}
       <div className="flex flex-col flex-grow w-full h-full overflow-y-auto px-2">
@@ -239,6 +247,8 @@ function App() {
           />
         </div>
       </div>
+      <EventLogModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} events={events} />
+
     </div>
   );
 }

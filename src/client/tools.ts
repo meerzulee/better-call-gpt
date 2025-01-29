@@ -28,6 +28,6 @@ export function loadMemory() {
 }
 
 export function resetMemory() {
-    localStorage.removeItem("memory"); // Clear stored memory
-    return {}; // Return an empty object to reset state
+    localStorage.removeItem("memory");
+    return {};
 }

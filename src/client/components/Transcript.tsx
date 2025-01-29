@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 function Message({ message, timestamp, isUser, color }: { message: string; timestamp: string; isUser: boolean; color?: string }) {
     return (
         <motion.div
-            initial={{ opacity: 0, y: 10 }} // Start slightly lower
-            animate={{ opacity: 1, y: 0 }} // Fade in & move up
-            exit={{ opacity: 0, y: -10 }} // Fade out & move up when removed
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
             className={`flex ${isUser ? "justify-end" : "justify-start"} w-full`}
         >
