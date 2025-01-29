@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { XCircle } from "react-feather";
 
 export default function EventLogModal({ isOpen, onClose, events }: { isOpen: boolean; onClose: () => void; events: any[] }) {
     if (!isOpen) return null;
@@ -20,7 +21,7 @@ export default function EventLogModal({ isOpen, onClose, events }: { isOpen: boo
             >
                 <div className="flex justify-between items-center">
                     <h2 className="text-xl font-semibold">Event Logs</h2>
-                    <button onClick={onClose} className="text-red-500 font-bold">X</button>
+                    <button onClick={onClose} className="text-red-500 font-bold"><XCircle /></button>
                 </div>
 
                 <div className="mt-4 max-h-80 overflow-y-auto border p-3 rounded-lg bg-gray-100">
