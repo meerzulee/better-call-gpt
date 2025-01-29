@@ -93,10 +93,10 @@ The app will be running on `http://localhost:3000`
 ```
 
 ## References
+- [Vite-Express](https://github.com/szymmis/vite-express)
 - [OpenAI API](https://platform.openai.com/docs/api-reference)
 - [Framer Motion](https://www.framer.com/motion/)
 - [React](https://react.dev/)
-- [React-dom](https://react.dev/)
 - [OpenAI-Realtime-Console](https://github.com/openai/openai-realtime-console)
 
 ## 🤝 Contributing
