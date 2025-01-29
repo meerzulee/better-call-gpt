@@ -54,7 +54,7 @@ export default function SessionControls({
     isSessionActive: boolean,
 }) {
     return (
-        <div className="flex items-center bg-violet-500 h-full rounded-md">
+        <div className="flex items-center  h-full rounded-md">
             {isSessionActive ? (
                 <SessionActive
                     stopSession={stopSession}
