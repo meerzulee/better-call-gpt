@@ -158,7 +158,7 @@ function App() {
         <h1 className="text-xl">Better Call GPT</h1>
       </div>
       {/* Body */}
-      <div className="flex flex-col flex-grow w-full h-full overflow-y-auto">
+      <div className="flex flex-col flex-grow w-full h-full overflow-y-auto px-2">
         <div className="flex w-full h-1/2  overflow-y-auto p-1">
           <div className="max-w-3xl mx-auto bg-gray-100 rounded-md overflow-y-auto w-full shadow-sm">
             <div className="p-3 uppercase sticky top-0 bg-gray-100">
