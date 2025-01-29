@@ -48,8 +48,8 @@ The app will be running on `http://localhost:3000`
 
 - Click to Start Call button to start a new session.
 - Ask about news, weather, or anything else it will use `tavily_search` to get the information.
-- If you ask to remember something, it will store the information in the memory.
-- To load the memory, you can say "retrieve my memory".
+- If you ask to remember something, it will store the information in the memory. For example, "remember my name"
+- To load the memory, you can say "retrieve memory".
 - To see the event logs, you can click the "Event Logs" button.
 
 ---
