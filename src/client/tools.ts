@@ -16,3 +16,18 @@ export async function getSearchData(query: string) {
 
     return formattedResults;
 }
+
+export function saveMemory(key: string, value: string) {
+    const memory = JSON.parse(localStorage.getItem("memory") || "{}");
+    memory[key] = value;
+    localStorage.setItem("memory", JSON.stringify(memory));
+}
+
+export function loadMemory() {
+    return JSON.parse(localStorage.getItem("memory") || "{}");
+}
+
+export function resetMemory() {
+    localStorage.removeItem("memory"); // Clear stored memory
+    return {}; // Return an empty object to reset state
+}

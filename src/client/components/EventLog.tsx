@@ -19,7 +19,7 @@ function Event({ event, timestamp }: { event: any, timestamp: string }) {
                 )}
                 <div className="text-sm text-gray-500">
                     {isClient ? "client:" : "server:"}
-                    &nbsp;{event.type} | {timestamp}
+                    &nbsp;{event.type}
                 </div>
             </div>
             <div
@@ -50,7 +50,10 @@ export default function EventLog({ events }: { events: any[] }) {
                     timestamp={new Date().toLocaleTimeString()}
                 />
             ),
-            timestamp: new Date().getTime(),
+            timestamp: () => {
+                const timestamp = new Date().getTime();
+                return timestamp;
+            },
         });
     });
 

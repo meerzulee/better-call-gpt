@@ -11,7 +11,6 @@ function Message({ message, timestamp, isUser, color }: { message: string; times
         >
             <div className={`max-w-lg p-3 rounded-lg shadow-md text-sm ${isUser ? "bg-blue-500 text-white" : "bg-gray-200 text-black"} ${color ? color : ""}`}>
                 <p>{message}</p>
-                <div className="text-xs mt-1">{timestamp}</div>
             </div>
         </motion.div>
     );

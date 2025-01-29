@@ -41,13 +41,52 @@ const WEATHER_FUNCTION = {
     },
 }
 
+const MEMORY_FUNCTION = {
+    type: "function",
+    name: "set_memory",
+    description: "Saves important data about the user into memory.",
+    parameters: {
+        type: "object",
+        properties: {
+            key: {
+                type: "string",
+                description: "Memory key. Use lowercase and underscores only.",
+            },
+            value: {
+                type: "string",
+                description: "Value to be stored as a string.",
+            },
+        },
+        required: ["key", "value"],
+    },
+}
+
+const LOAD_MEMORY_FUNCTION = {
+    type: "function",
+    name: "get_memory",
+    description: "Retrieves stored memory. If no key is provided, returns all stored information.",
+    parameters: {
+        type: "object",
+        properties: {
+            key: {
+                type: "string",
+                description: "The memory key to retrieve. If not provided, all memory will be returned.",
+            },
+        },
+    },
+}
+
+
+
 export const INIT_SESSION = {
     type: "session.update",
     session: {
         instructions: INSTRUCTIONS,
         tools: [
+            ...(import.meta.env.OPENWEATHER_API_KEY ? [WEATHER_FUNCTION] : []),
             TAVILY_SEARCH_FUNCTION,
-            ...(import.meta.env.OPENWEATHER_API_KEY ? [WEATHER_FUNCTION] : [])
+            MEMORY_FUNCTION,
+            LOAD_MEMORY_FUNCTION
         ],
         tool_choice: "auto",
         input_audio_transcription: {

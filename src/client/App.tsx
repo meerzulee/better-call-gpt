@@ -2,8 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import SessionControls from "./components/SessionControls";
 import EventLog from "./components/EventLog";
 import Transcript from "./components/Transcript";
-import { getSearchData, getWeatherData } from "./tools";
+import { getSearchData, getWeatherData, loadMemory, resetMemory, saveMemory } from "./tools";
 import { INIT_SESSION } from "./config";
+import { Trash2 } from "react-feather";
+import Button from "./components/Button";
+import MemoryDisplay from "./components/Memory";
 
 
 
@@ -14,6 +17,8 @@ function App() {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const audioElement = useRef<HTMLAudioElement | null>(null);
   const mediaStream = useRef<MediaStream | null>(null);
+  const [memory, setMemory] = useState<Record<string, string>>(loadMemory());
+
 
   async function startSession() {
     // Get an ephemeral key
@@ -131,6 +136,21 @@ function App() {
                 functionResult = await getWeatherData(args.location);
               } else if (name === "tavily_search") {
                 functionResult = await getSearchData(args.query);
+              } else if (name === "set_memory") {
+                saveMemory(args.key, args.value);
+                setMemory((prevMemory) => ({
+                  ...prevMemory,
+                  [args.key]: args.value,
+                }));
+                sendFunctionResult(call_id, { success: true });
+
+              } else if (name === "get_memory") {
+                const storedMemory = loadMemory();
+                const response = args.key
+                  ? { key: args.key, value: storedMemory[args.key] || "No memory found" }
+                  : { memory: storedMemory };
+
+                sendFunctionResult(call_id, response);
               }
 
               // Send function results back to the model
@@ -145,11 +165,39 @@ function App() {
       dataChannel.addEventListener("open", () => {
         setIsSessionActive(true);
         sendClientEvent(INIT_SESSION);
+
+
+        const storedMemory = loadMemory();
+        setMemory(storedMemory);
+
+        if (Object.keys(storedMemory).length > 0) {
+          sendClientEvent({
+            type: "conversation.item.create",
+            item: {
+              type: "function_call_output",
+              call_id: "initial_memory_load",
+              output: JSON.stringify({ memory: storedMemory }),
+            },
+          });
+        }
+        // Send a function call to get the memory. It's little bit hacky but it works.
+        sendClientEvent({
+          type: "conversation.item.create",
+          item: {
+            type: "function_call",
+            name: "get_memory",
+            arguments: {},
+          },
+        });
+
         setEvents([]);
       });
     }
   }, [dataChannel]);
 
+  function handleResetMemory() {
+    setMemory(resetMemory()); // Reset memory in state
+  }
 
   return (
     <div className="flex flex-col h-full  relative">
@@ -171,11 +219,12 @@ function App() {
         </div>
         <div className="flex w-full h-1/2 overflow-y-auto p-1 pb-20 ">
           <div className="max-w-3xl mx-auto bg-gray-100 rounded-md  overflow-y-auto w-full">
-            <div className="p-3 uppercase sticky top-0 bg-gray-100">
-              <h1>Event Logs</h1>
+            <div className="p-3 uppercase sticky top-0 bg-gray-100 flex justify-between">
+              <h1>Memory</h1>
+              <Button onClick={handleResetMemory} icon={<Trash2 height={16} />} className="bg-red-400 text-xs">Reset Memory</Button>
             </div>
             <div className="flex flex-col gap-2 w-full px-2">
-              <EventLog events={events} />
+              <MemoryDisplay memory={memory} />
             </div>
           </div>
         </div>
