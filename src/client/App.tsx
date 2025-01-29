@@ -2,31 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import SessionControls from "./components/SessionControls";
 import EventLog from "./components/EventLog";
 import Transcript from "./components/Transcript";
+import { getSearchData, getWeatherData } from "./tools";
+import { INIT_SESSION } from "./config";
 
-const INIT_SESSION = {
-  type: "session.update",
-  session: {
-    tools: [
-      {
-        type: "function",
-        name: "get_weather",
-        description: "Get the weather for a given location",
-        parameters: {
-          type: "object",
-          strict: true,
-          properties: {
-            "location": { "type": "string" }
-          },
-          required: ["location"],
-        },
-      },
-    ],
-    tool_choice: "auto",
-    // input_audio_transcription: {
-    //   model: "whisper-1",
-    // }
-  }
-}
 
 
 function App() {
@@ -38,15 +16,13 @@ function App() {
   const mediaStream = useRef<MediaStream | null>(null);
 
   async function startSession() {
-    // Get an ephemeral key from the Fastify server
+    // Get an ephemeral key
     const tokenResponse = await fetch("/api/session");
     const data = await tokenResponse.json();
     const EPHEMERAL_KEY = data.client_secret.value;
 
-    // Create a peer connection
     const pc = new RTCPeerConnection();
 
-    // Set up to play remote audio from the model
     audioElement.current = document.createElement("audio");
     audioElement.current.autoplay = true;
     pc.ontrack = (e) => {
@@ -55,18 +31,15 @@ function App() {
       }
     };
 
-    // Add local audio track for microphone input in the browser
     const ms = await navigator.mediaDevices.getUserMedia({
       audio: true,
     });
     mediaStream.current = ms;
 
     pc.addTrack(ms.getTracks()[0]);
-    // Set up data channel for sending and receiving events
     const dc = pc.createDataChannel("oai-events");
     setDataChannel(dc);
 
-    // Start the session using the Session Description Protocol (SDP)
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
@@ -120,64 +93,55 @@ function App() {
       );
     }
   }
-
-  // Send a text message to the model
-  function sendTextMessage(message: string) {
-    const event = {
-      type: "conversation.item.create",
-      item: {
-        type: "message",
-        role: "user",
-        content: [
-          {
-            type: "input_text",
-            text: message,
-          },
-        ],
-      },
-    };
-
-    sendClientEvent(event);
-    sendClientEvent({ type: "response.create" });
-  }
-
-  async function getWeatherData(location: string) {
-    const response = await fetch(`/api/weather?location=${location}`);
-    const data = await response.json();
-    return data;
-  }
-
-  function sendFunctionResult(eventId: string, result: any) {
+  function sendFunctionResult(callId: string, result: any) {
     if (dataChannel) {
       const responseEvent = {
-        type: "function_response",
-        event_id: eventId,
-        output: result,
+        type: "conversation.item.create",
+        item: {
+          type: "function_call_output",
+          call_id: callId,
+          output: JSON.stringify(result),
+        },
       };
+
       dataChannel.send(JSON.stringify(responseEvent));
+
+      // Immediately ask model to continue responding
+      sendClientEvent({ type: "response.create" });
     }
   }
   // Attach event listeners to the data channel when a new one is created
   useEffect(() => {
     if (dataChannel) {
-      // Append new server events to the list
       dataChannel.addEventListener("message", async (e) => {
         const eventData = JSON.parse(e.data);
-
         setEvents((prev: any[]) => [eventData, ...prev] as never[]);
 
-        if (eventData.type === "function_call") {
-          const { name, arguments: args } = eventData;
-          if (name === "get_weather") {
-            const weatherData = await getWeatherData(args.location);
-            sendFunctionResult(eventData.id, weatherData);
+        // Detect when the model calls a function (response.done)
+        if (eventData.type === "response.done") {
+          const output = eventData.response?.output || [];
+
+          for (const item of output) {
+            if (item.type === "function_call") {
+              const { name, arguments: argsString, call_id } = item;
+              const args = JSON.parse(argsString);
+              // Handle function execution
+              let functionResult = null;
+              if (name === "get_weather") {
+                functionResult = await getWeatherData(args.location);
+              } else if (name === "tavily_search") {
+                functionResult = await getSearchData(args.query);
+              }
+
+              // Send function results back to the model
+              if (functionResult !== null) {
+                sendFunctionResult(call_id, functionResult);
+              }
+            }
           }
         }
       });
 
-
-
-      // Set session active when the data channel is opened
       dataChannel.addEventListener("open", () => {
         setIsSessionActive(true);
         sendClientEvent(INIT_SESSION);
@@ -195,50 +159,33 @@ function App() {
       </div>
       {/* Body */}
       <div className="flex flex-col flex-grow w-full h-full overflow-y-auto">
-        {/* Red Section with Overflow */}
         <div className="flex w-full h-1/2  overflow-y-auto p-1">
           <div className="max-w-3xl mx-auto bg-gray-100 rounded-md overflow-y-auto w-full shadow-sm">
             <div className="p-3 uppercase sticky top-0 bg-gray-100">
               <h1>Transcript</h1>
             </div>
             <div className="flex flex-col w-full gap-2">
-              {/* {Array.from({ length: 1 }).map((_, i) => (
-                <div key={i} className="p-2 m-1 bg-red-800 text-white rounded">
-                  Red Box {i + 1}
-                </div>
-              ))} */}
               <Transcript events={events} />
             </div>
           </div>
         </div>
-        {/* Green Section with Overflow */}
         <div className="flex w-full h-1/2 overflow-y-auto p-1 pb-20 ">
           <div className="max-w-3xl mx-auto bg-gray-100 rounded-md  overflow-y-auto w-full">
             <div className="p-3 uppercase sticky top-0 bg-gray-100">
-              <h1>Memory</h1>
+              <h1>Event Logs</h1>
             </div>
             <div className="flex flex-col gap-2 w-full px-2">
-              {/* {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="p-2 m-1 bg-green-800 text-white rounded">
-                  Green Box {i + 1}
-                </div>
-              ))} */}
               <EventLog events={events} />
-
             </div>
           </div>
         </div>
       </div>
       {/* Control Section */}
       <div className="absolute bottom-0 left-0 right-0">
-        <div className="flex justify-center mb-10 w-full ">
-          {/* buttons */}
+        <div className="flex justify-center mb-8 w-full ">
           <SessionControls
             startSession={startSession}
             stopSession={stopSession}
-            sendClientEvent={sendClientEvent}
-            sendTextMessage={sendTextMessage}
-            serverEvents={events}
             isSessionActive={isSessionActive}
           />
         </div>

@@ -30,41 +30,38 @@ function Event({ event, timestamp }: { event: any, timestamp: string }) {
         </div>
     );
 }
-
 export default function EventLog({ events }: { events: any[] }) {
+    const messageHistory: { [key: string]: string } = {};
     const eventsToDisplay: any[] = [];
-    let deltaEvents: { [key: string]: any } = {};
 
     events.forEach((event) => {
-        // if (event.type.startsWith("response.audio_transcript.delta")) {
-        //     console.log("audio transcript", event.delta);
-        // }
-        if (event.type.endsWith("delta")) {
-            // console.log("Event", event.type, event);
-
-            if (deltaEvents[event.type]) {
-                // for now just log a single event per render pass
-                return;
-            } else {
-                deltaEvents[event.type] = event;
+        if (event.type.startsWith("response.delta")) {
+            if (!messageHistory[event.event_id]) {
+                messageHistory[event.event_id] = "";
             }
+            messageHistory[event.event_id] += event.delta?.text || "";
+            return;
         }
-        eventsToDisplay.unshift(
-            <Event
-                key={event.event_id}
-                event={event}
-                timestamp={new Date().toLocaleTimeString()}
-            />,
-        );
+        eventsToDisplay.push({
+            component: (
+                <Event
+                    key={event.event_id}
+                    event={{ ...event, full_text: messageHistory[event.event_id] }}
+                    timestamp={new Date().toLocaleTimeString()}
+                />
+            ),
+            timestamp: new Date().getTime(),
+        });
     });
 
+
     return (
-        <>
+        <div className="flex flex-col gap-2 p-3">
             {events.length === 0 ? (
-                <div className="text-gray-500 px-3">Awaiting events...</div>
+                <div className="text-gray-500 text-center">Awaiting messages...</div>
             ) : (
-                eventsToDisplay
+                eventsToDisplay.reverse().map((event) => event.component)
             )}
-        </>
+        </div>
     );
 }

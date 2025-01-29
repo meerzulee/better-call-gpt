@@ -30,14 +30,14 @@ router.get("/session", async (_, res) => {
 // Get Weather
 router.get("/weather", async (req, res) => {
   const { location } = req.query;
-  const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${process.env.OPENWEATHER_API_KEY}`);
+  const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${process.env.OPENWEATHER_API_KEY}&units=metric`);
   const data = await r.json();
   res.send(data);
 });
 
 // Search the Web
-router.post("/search", async (req, res) => {
-  const { query } = req.body;
+router.get("/search", async (req, res) => {
+  const { query } = req.query;
   const r = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: {
@@ -50,7 +50,7 @@ router.post("/search", async (req, res) => {
     }),
   });
   const data = await r.json();
-  res.send(data);
+  res.send(data.results);
 });
 app.use("/api", router);
 
